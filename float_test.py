@@ -5,7 +5,7 @@ import psutil
 from scipy.spatial.distance import cdist
 
 def main():
-    cap = 80
+    cap = 50
     n = 100
     tests = 10
 
@@ -82,3 +82,6 @@ def fill_ram_with_int8_vectors(percent_to_fill, n_dimensions):
 
     vectors = np.random.randint(-128, 128, size=(num_vectors, n_dimensions), dtype=np.int8)
     return vectors
+
+if __name__ == '__main__':
+    main()
