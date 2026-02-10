@@ -5,14 +5,10 @@ import psutil
 from scipy.spatial.distance import cdist
 
 def main():
-    cap = 0.01
+    cap = 50
     n = 100
     tests = 10
 
-    test_ints(cap, n, tests)
-    test_floats(cap, n, tests)
-
-def test_ints(cap, n, tests):
     print("------------\nint8 test\n------------")
     dataset = fill_ram_with_int8_vectors(cap, n)
     
@@ -21,7 +17,7 @@ def test_ints(cap, n, tests):
     distance_times = []
     scipy_distance_times = []
  
-    for i in range(min(tests, dataset.shape[0])):
+    for i in tqdm(range(min(tests, dataset.shape[0]))):
         vec = dataset[i]
         start = time()
         prod = vec @ vec
@@ -29,7 +25,7 @@ def test_ints(cap, n, tests):
 
     print(f"Avg. Inner Product Computation Time: {sum(inner_prod_times)/len(inner_prod_times)}")
 
-    for i in range(min(tests, dataset.shape[0])):
+    for i in tqdm(range(min(tests, dataset.shape[0]))):
         vec = dataset[i]
         start = time()
         matvec = dataset @ vec
@@ -37,15 +33,15 @@ def test_ints(cap, n, tests):
 
     print(f"Avg. Matvec Computation Time: {sum(matvec_times)/len(matvec_times)}")
 
-    for i in range(min(tests, dataset.shape[0])):
+    for i in tqdm(range(min(tests, dataset.shape[0]))):
         vec = dataset[i]
         start = time()
         dist = vec @ vec - 2 * (dataset @ vec)
         distance_times.append(time() - start)
 
     print(f"Avg. Distance Computation Time: {sum(distance_times)/len(distance_times)}")
-    
-    for i in range(min(tests, dataset.shape[0])):
+    ''' 
+    for i in tqdm(range(min(tests, dataset.shape[0]))):
         vec = dataset[i:i+1]
         start = time()
         cdist(dataset, vec, metric='sqeuclidean')
@@ -53,51 +49,7 @@ def test_ints(cap, n, tests):
 
     print(f"Avg. Scipy Distance Computation Time: {sum(scipy_distance_times)/len(scipy_distance_times)}")
     print()
-
-
-def test_floats(cap, n, tests):
-    print("------------\nfloat32 test\n------------")
-    dataset = fill_ram_with_float32_vectors(cap, n)
-    
-    inner_prod_times = []
-    matvec_times = []
-    distance_times = []
-    scipy_distance_times = []
- 
-    for i in range(min(tests, dataset.shape[0])):
-        vec = dataset[i]
-        start = time()
-        prod = vec @ vec
-        inner_prod_times.append(time() - start)
-
-    print(f"Avg. Inner Product Computation Time: {sum(inner_prod_times)/len(inner_prod_times)}")
-
-    for i in range(min(tests, dataset.shape[0])):
-        vec = dataset[i]
-        start = time()
-        matvec = dataset @ vec
-        matvec_times.append(time() - start)
-
-    print(f"Avg. Matvec Computation Time: {sum(matvec_times)/len(matvec_times)}")
-
-    for i in range(min(tests, dataset.shape[0])):
-        vec = dataset[i]
-        start = time()
-        dist = vec @ vec - 2 * (dataset @ vec)
-        distance_times.append(time() - start)
-
-    print(f"Avg. Distance Computation Time: {sum(distance_times)/len(distance_times)}")
-    
-    for i in range(min(tests, dataset.shape[0])):
-        vec = dataset[i:i+1]
-        start = time()
-        cdist(dataset, vec, metric='sqeuclidean')
-        scipy_distance_times.append(time() - start)
-
-    print(f"Avg. Scipy Distance Computation Time: {sum(scipy_distance_times)/len(scipy_distance_times)}")
-    print()
-
-
+    '''
 def fill_ram_with_float32_vectors(percent_to_fill, n_dimensions):
     """Fill RAM with n-dimensional float32 vectors."""
     total_ram = psutil.virtual_memory().total
