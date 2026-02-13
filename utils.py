@@ -1,7 +1,7 @@
 import numpy as np
 import psutil
 
-def fill_ram_with_float32_vectors(percent_to_fill, n_dimensions):
+def fill_ram_with_float32_vectors(percent_to_fill, n_dimensions, with_stats=False):
     """Fill RAM with n-dimensional float32 vectors."""
     total_ram = psutil.virtual_memory().total
     print(f"Total RAM: {total_ram / (1024**3):.2f} GB")
@@ -15,6 +15,9 @@ def fill_ram_with_float32_vectors(percent_to_fill, n_dimensions):
     print(f"Creating {num_vectors:,} vectors of dimension {n_dimensions}")
     rng = np.random.default_rng()
     vectors = rng.random((num_vectors, n_dimensions), dtype=np.float32)
+    
+    if with_stats:
+        return total_ram, target_memory, num_vectors, vectors
     return vectors
 
 def fill_ram_with_int8_vectors(percent_to_fill, n_dimensions):
