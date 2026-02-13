@@ -82,7 +82,7 @@ def main():
     for i in tqdm(range(min(TESTS, dataset.shape[0]))):
         vecs = dataset[i: i + BATCH]
         start = time()
-        distances = np.linalg.norm(vecs, axis=1)**2 - 2 * dataset @ vecs.T
+        distances = (np.linalg.norm(vecs, axis=1)**2).astype(np.float32) - 2 * dataset @ vecs.T
         times.append(time() - start)
     results.append(sum(times)/len(times))
     
@@ -91,7 +91,7 @@ def main():
     for i in tqdm(range(min(TESTS, dataset.shape[0]))):
         vecs = dataset[i: i + BATCH]
         start = time()
-        distances_einsum = np.einsum('ij,ij->i', vecs, vecs) - 2 * dataset @ vecs.T
+        distances_einsum = np.einsum('ij,ij->i', vecs, vecs, dtype=np.float32) - 2 * dataset @ vecs.T
         times.append(time() - start)
     results.append(sum(times)/len(times))
     
@@ -100,7 +100,7 @@ def main():
     for i in tqdm(range(min(TESTS, dataset.shape[0]))):
         vecs = dataset[i: i + BATCH]
         start = time()
-        distances_sum = np.sum(vecs * vecs, axis=1) - 2 * dataset @ vecs.T
+        distances_sum = np.sum(vecs * vecs, axis=1, dtype=np.float32) - 2 * dataset @ vecs.T
         times.append(time() - start)
     results.append(sum(times)/len(times))
     
