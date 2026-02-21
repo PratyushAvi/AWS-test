@@ -113,7 +113,7 @@ def main():
         vecs = dataset[i: i + BATCH]
         start = time()
         norms = np.sum(vecs * vecs, axis=1, dtype=np.float32)
-        dot_prod = dataset @ vecs.T
+        dot_prod = dataset @ vecs.T 
         distances_sum = norms - 2 * dot_prod
         times.append(time() - start)
     results.append(sum(times)/len(times))
