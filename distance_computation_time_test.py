@@ -3,6 +3,7 @@ from tqdm import tqdm
 from time import time
 from utils import *
 import argparse
+from timeit import timeit
 
 def main():
     parser = argparse.ArgumentParser(description='Benchmark batched float32 vector operations')
@@ -31,24 +32,22 @@ def main():
     results.append(time() - start)
     print(f"All L2 Norm Computation Time: {results[-1]}")
 
-    times = []
-    for i in tqdm(range(min(TESTS, dataset.shape[0]))):
-        vecs = dataset[i:i+BATCH]
-        start = time()
-        compute_distances_einsum(dataset, vecs)
-        times.append(time() - start)
-    results.append(sum(times)/len(times))
-    print(f"Distance Computation (w/o precomputed norms) Time: {results[-1]}")
+    points = np.random.choice(num_vectors, BATCH, replace=False)
 
-    times = []
-    for i in tqdm(range(min(TESTS, dataset.shape[0]))):
-        vecs = dataset[i:i+BATCH]
-        start = time()
-        compute_distanced_using_precomputed_norms(vecs, dataset, norms[i:i+BATCH], norms)
-        times.append(time() - start)
-    results.append(sum(times)/len(times))
-    print(f"Distance Computation (w/ precomputed norms) Time: {results[-1]}")
+    results.append(timeit(
+        lambda: compute_distances_using_precomputed_norms(dataset, norms, points),
+        number = TESTS
+    ))
+    print(f"Avg. Distance Computation Time (standard): {results[-1]}")
 
+    dataset = np.hstack([dataset, np.ones((num_vectors, 1), dtype=np.float32), norms[:, None]])
+
+    results.append(timeit(
+        lambda: compute_distances_using_matmul_trick(dataset, norms, points),
+        number = TESTS
+    ))
+
+    print(f"Avg. Distance Computation Time (stack and multiply): {results[-1]}")
     print(f"\nAll results:\n{setup_stats + results}\n")
 
 def pre_compute_norms(M):
@@ -70,12 +69,16 @@ def compute_distances_standard(A, M):
     
     return dists  # squared distances, shape (b, n)
 
-def compute_distanced_using_precomputed_norms(A, M, A_norms, M_norms):
-    dot = A @ M.T
+def compute_distances_using_precomputed_norms(X, norms, points):
+    V = X[points]
 
-    dists = A_norms[:, None] + M_norms[None, :] - 2 * dot
+    dot = V @ X.T
+    
+    return norms[points][:, None] + norms[None, :] - 2 * dot
 
-    return dists
+def compute_distances_using_matmul_trick(X, norms, points):
+    V = np.hstack([-2 * X[points][:,:-2], norms[points][:, None], np.ones((len(points), 1), dtype=np.float32)])
+    return X @ V.T
 
 def compute_distances_einsum(M, A):
     assert A.dtype == np.float32 and M.dtype == np.float32
@@ -93,3 +96,6 @@ def compute_distances_einsum(M, A):
 
 if __name__ == '__main__':
     main()
+
+
+# TODO: see how long memory allocations take
