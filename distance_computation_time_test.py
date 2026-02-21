@@ -24,7 +24,7 @@ def main():
     print(f"BATCH SIZE: {BATCH}, TESTS: {TESTS}")
     ram, used_ram, num_vectors, dataset = fill_ram_with_float32_vectors(CAP, DIM, with_stats=True)
 
-    setup_stats = [ram, used_ram, num_vectors, 'float32', DIM, BATCH]
+    setup_stats = [ram, used_ram, CAP, num_vectors, 'float32', DIM, BATCH]
     results = []
 
     start = time()
@@ -53,22 +53,6 @@ def main():
 def pre_compute_norms(M):
     return np.einsum('ij,ij->i', M, M)
 
-def compute_distances_standard(A, M):
-    # (b,), (n,) — precompute squared norms
-    A_norm = (A ** 2).sum(axis=1)        # (b,)
-    M_norm = (M ** 2).sum(axis=1)        # (n,)
-    
-    # core matmul: (b, n)
-    dot = A @ M.T                        # (b, n)
-    
-    # broadcast: (b,1) + (n,) - 2*(b,n)
-    dists = A_norm[:, None] + M_norm[None, :] - 2 * dot
-    
-    # clip to avoid tiny negatives from floating point error
-    # np.clip(dists, 0, None, out=dists)
-    
-    return dists  # squared distances, shape (b, n)
-
 def compute_distances_using_precomputed_norms(X, norms, points):
     V = X[points]
 
@@ -79,19 +63,6 @@ def compute_distances_using_precomputed_norms(X, norms, points):
 def compute_distances_using_matmul_trick(X, norms, points):
     V = np.hstack([-2 * X[points][:,:-2], norms[points][:, None], np.ones((len(points), 1), dtype=np.float32)])
     return X @ V.T
-
-def compute_distances_einsum(M, A):
-    assert A.dtype == np.float32 and M.dtype == np.float32
-    
-    A_norm = np.einsum('ij,ij->i', A, A)          # (b,) stays float32
-    M_norm = np.einsum('ij,ij->i', M, M)          # (n,) stays float32
-    
-    dot = np.matmul(A, M.T)                        # (b, n) — matmul respects float32
-    
-    dists = A_norm[:, None] + M_norm[None, :] - 2 * dot
-    # np.clip(dists, 0, None, out=dists)
-
-    return dists
 
 
 if __name__ == '__main__':
