@@ -1,0 +1,47 @@
+cluster_name: neighborhood-cluster
+max_workers: 1
+provider:
+  type: aws
+  region: us-east-2
+  availability_zone: us-east-2b, us-east-2a, us-east-2c
+
+auth:
+  ssh_user: ec2-user
+
+available_node_types:
+  head:
+    node_config:
+      InstanceType: r7i.4xlarge
+      ImageId: ami-03ecd91b81fbaee22
+      SecurityGroupIds:
+        - sg-041fca7d03d8e0cc0
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 50
+    resources: {"CPU": 16}
+    min_workers: 0
+    max_workers: 0
+  worker:
+    node_config:
+      InstanceType: r5.4xlarge
+      ImageId: ami-03ecd91b81fbaee22
+      SecurityGroupIds:
+        - sg-041fca7d03d8e0cc0
+      InstanceMarketOptions:
+        MarketType: spot
+        SpotOptions:
+          SpotInstanceType: persistent
+          InstanceInterruptionBehavior: stop
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 50
+    resources: {"CPU": 16}
+    min_workers: 1
+    max_workers: 1
+
+head_node_type: head
+
+initialization_commands:
+  - sudo mount -t efs -o tls fs-0cfe38c63bf78de46:/ /mnt/efs || true
